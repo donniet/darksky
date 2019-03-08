@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"time"
 )
 
 const (
-	defaultURLFormat = "https://api.darksky.net/forecast/%s/%f,%f"
+	defaultURLFormat = "https://api.darksky.net/forecast/%s/%f,%f?exclude=minutely&units=us"
 	defaultTimeout   = 30 * time.Second
 )
 
@@ -38,7 +39,15 @@ Get gets a response from darksky
 */
 func (s *Service) Get(lat, long float32) (Response, error) {
 	client := &http.Client{
-		Timeout: s.Timeout,
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout:   s.Timeout,
+				KeepAlive: s.Timeout,
+			}).Dial,
+			TLSHandshakeTimeout:   s.Timeout,
+			ResponseHeaderTimeout: s.Timeout,
+			ExpectContinueTimeout: s.Timeout,
+		},
 	}
 
 	ret := Response{}
@@ -109,6 +118,10 @@ type Data struct {
 	PrecipProbability    float32 `json:"precipProbability"`
 	PrecipType           string  `json:"precipType,omitempty"`
 	Temperature          float32 `json:"temperature"`
+	TemperatureHigh      float32 `json:"temperatureHigh"`
+	TemperatureHighTime  Time    `json:"temperatureHighTime"`
+	TemperatureLow       float32 `json:"temperatureLow"`
+	TemperatureLowTime   Time    `json:"temperatureLowTime"`
 	ApparentTemperature  float32 `json:"apparentTemperature"`
 	DewPoint             float32 `json:"dewPoint"`
 	Humidity             float32 `json:"humidity"`
