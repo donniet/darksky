@@ -32,6 +32,10 @@ func TestDarkskyUnmarshal(t *testing.T) {
 	if res.Hourly.Data[0].Icon != "rain" {
 		t.Errorf("first hour should be \"rain\"")
 	}
+
+	if res.Currently.Temperature != FromFahrenheit(55.09) {
+		t.Errorf("first daily temperature should be %f but got %f", 55.09, res.Currently.Temperature.Fahrenheit())
+	}
 }
 
 func TestDarkskyMarshal(t *testing.T) {

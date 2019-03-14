@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"time"
@@ -107,32 +108,97 @@ func (t Time) MarshalJSON() ([]byte, error) {
 }
 
 /*
+Temperature handls fahrenheit default temperatures, but has a default value of absolute zero
+*/
+type Temperature float32
+
+/*
+UnmarshalJSON unmarshals temperatures in fahrenheit
+*/
+func (t *Temperature) UnmarshalJSON(b []byte) error {
+	var temp float32
+
+	if err := json.Unmarshal(b, &temp); err != nil {
+		return err
+	}
+
+	log.Printf("temp: %f", temp)
+
+	// store temp as kelvin
+	*t = FromFahrenheit(temp)
+
+	return nil
+}
+
+/*
+MarshalJSON for temperatures as fahrenheit
+*/
+func (t Temperature) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Fahrenheit())
+}
+
+/*
+Fahrenheit converts the kelvin stored temperature to fahrenheit
+*/
+func (t Temperature) Fahrenheit() float32 {
+	return (float32(t)-273.15)*9./5. + 32
+}
+
+/*
+Celsius converts the kelvin stored temperature to celsius
+*/
+func (t Temperature) Celsius() float32 {
+	return float32(t) - 273.15
+}
+
+/*
+String outputs the temperature as fahrenheit
+*/
+func (t Temperature) String() string {
+	return fmt.Sprintf("%f", t.Fahrenheit())
+}
+
+/*
+FromFahrenheit creates a temperature object from a fahrenheight float
+*/
+func FromFahrenheit(temp float32) Temperature {
+	return Temperature((temp-32)*5./9. + 273.15)
+}
+
+/*
+FromCelsuis creates a temperature object from a celsuis float
+*/
+func FromCelsuis(temp float32) Temperature {
+	return Temperature(temp + 273.15)
+}
+
+/*
 Data is a struct to hold a set of weather data
 */
 type Data struct {
-	Time                 Time    `json:"time"`
-	Summary              string  `json:"summary,omitempty"`
-	Icon                 string  `json:"icon"`
-	NearestStormDistance float32 `json:"nearestStormDistance"`
-	PrecipIntensity      float32 `json:"precipIntensity"`
-	PrecipProbability    float32 `json:"precipProbability"`
-	PrecipType           string  `json:"precipType,omitempty"`
-	Temperature          float32 `json:"temperature"`
-	TemperatureHigh      float32 `json:"temperatureHigh"`
-	TemperatureHighTime  Time    `json:"temperatureHighTime"`
-	TemperatureLow       float32 `json:"temperatureLow"`
-	TemperatureLowTime   Time    `json:"temperatureLowTime"`
-	ApparentTemperature  float32 `json:"apparentTemperature"`
-	DewPoint             float32 `json:"dewPoint"`
-	Humidity             float32 `json:"humidity"`
-	Pressure             float32 `json:"pressure"`
-	WindSpeed            float32 `json:"windSpeed"`
-	WindGust             float32 `json:"windGust"`
-	WindBearing          float32 `json:"windBearing"`
-	CloudCover           float32 `json:"cloudCover"`
-	UVIndex              float32 `json:"uvIndex"`
-	Visibility           float32 `json:"visibility"`
-	Ozone                float32 `json:"ozone"`
+	Time                 Time        `json:"time"`
+	Summary              string      `json:"summary,omitempty"`
+	Icon                 string      `json:"icon"`
+	NearestStormDistance float32     `json:"nearestStormDistance"`
+	PrecipIntensity      float32     `json:"precipIntensity"`
+	PrecipProbability    float32     `json:"precipProbability"`
+	PrecipType           string      `json:"precipType,omitempty"`
+	Temperature          Temperature `json:"temperature"`
+	ApparentTemperature  Temperature `json:"apparentTemperature"`
+	TemperatureLow       Temperature `json:"temperatureLow"`
+	TemperatureHighTime  Time        `json:"temperatureHighTime"`
+	TemperatureHigh      Temperature `json:"temperatureHigh"`
+	TemperatureLowTime   Time        `json:"temperatureLowTime"`
+	DewPoint             float32     `json:"dewPoint"`
+	Humidity             float32     `json:"humidity"`
+	Pressure             float32     `json:"pressure"`
+	WindSpeed            float32     `json:"windSpeed"`
+	WindGust             float32     `json:"windGust"`
+	WindBearing          float32     `json:"windBearing"`
+	CloudCover           float32     `json:"cloudCover"`
+	UVIndex              float32     `json:"uvIndex"`
+	Visibility           float32     `json:"visibility"`
+	Ozone                float32     `json:"ozone"`
 }
 
 /*
