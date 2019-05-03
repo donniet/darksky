@@ -24,7 +24,7 @@ func TestDarkskyUnmarshal(t *testing.T) {
 		t.Errorf("latitude is not correct")
 	}
 
-	if res.Currently.Time != time.Unix(1551886726, 0) {
+	if res.Currently.Time != UnixTime(time.Unix(1551886726, 0)) {
 		t.Errorf("expected current time %v got %v", time.Unix(1551886726, 0), res.Currently.Time)
 	}
 
@@ -34,26 +34,33 @@ func TestDarkskyUnmarshal(t *testing.T) {
 		t.Errorf("first hour should be \"rain\"")
 	}
 
-	if res.Currently.Temperature != FromFahrenheit(55.09) {
-		t.Errorf("first daily temperature should be %f but got %f", 55.09, res.Currently.Temperature.Fahrenheit())
+	if res.Currently.Temperature == nil || *res.Currently.Temperature != 55.09 {
+		t.Errorf("first daily temperature should be %f but got %v", 55.09, res.Currently.Temperature)
 	}
 }
 
 func TestDarkskyMarshal(t *testing.T) {
+	temp := float32(55.09)
+	appTemp := float32(55.09)
+	dewPoint := float32(50.97)
+	hourTemp := float32(54.92)
+	appHourTemp := float32(54.92)
+	hourDewPoint := float32(51.07)
+
 	res := Response{
 		Latitude:  37.8267,
 		Longitude: -122.4233,
 		Timezone:  "America/Los_Angeles",
-		Currently: Data{
-			Time:                 time.Unix(1551886726, 0),
+		Currently: &Data{
+			Time:                 UnixTime(time.Unix(1551886726, 0)),
 			Summary:              "Mostly Cloudy",
 			Icon:                 "partly-cloudy-day",
 			NearestStormDistance: 0,
 			PrecipIntensity:      0,
 			PrecipProbability:    0,
-			Temperature:          FromFahrenheit(55.09000000000001),
-			ApparentTemperature:  FromFahrenheit(55.09000000000001),
-			DewPoint:             FromFahrenheit(50.970000000000006),
+			Temperature:          &temp,
+			ApparentTemperature:  &appTemp,
+			DewPoint:             &dewPoint,
 			Humidity:             0.86,
 			Pressure:             1003.16,
 			WindSpeed:            10.93,
@@ -64,20 +71,20 @@ func TestDarkskyMarshal(t *testing.T) {
 			Visibility:           6.9,
 			Ozone:                353.42,
 		},
-		Hourly: DataSummary{
+		Hourly: &DataSummary{
 			Summary: "Mostly cloudy throughout the day and breezy until this afternoon.",
 			Icon:    "wind",
 			Data: []Data{
 				Data{
-					Time:                time.Unix(1551884400, 0),
+					Time:                UnixTime(time.Unix(1551884400, 0)),
 					Summary:             "Rain",
 					Icon:                "rain",
 					PrecipIntensity:     0.0583,
 					PrecipProbability:   0.98,
 					PrecipType:          "rain",
-					Temperature:         FromFahrenheit(54.92),
-					ApparentTemperature: FromFahrenheit(54.92),
-					DewPoint:            FromFahrenheit(51.06999999999998),
+					Temperature:         &hourTemp,
+					ApparentTemperature: &appHourTemp,
+					DewPoint:            &hourDewPoint,
 					Humidity:            0.87,
 					Pressure:            1002.53,
 					WindSpeed:           10.72,
@@ -111,7 +118,7 @@ func TestDarkskyMarshal(t *testing.T) {
 
 	if b, err := json.Marshal(res); err != nil {
 		t.Error(err)
-	} else if string(b) != `{"latitude":37.8267,"longitude":-122.4233,"timezone":"America/Los_Angeles","currently":{"time":1551886726,"summary":"Mostly Cloudy","icon":"partly-cloudy-day","nearestStormDistance":0,"precipIntensity":0,"precipProbability":0,"temperature":55.09000000000001,"apparentTemperature":55.09000000000001,"dewPoint":50.970000000000006,"humidity":0.86,"pressure":1003.16,"windSpeed":10.93,"windGust":18.43,"windBearing":205,"cloudCover":0.79,"uvIndex":0,"visibility":6.9,"ozone":353.42},"minutely":{"summary":"","icon":"","data":null},"hourly":{"summary":"Mostly cloudy throughout the day and breezy until this afternoon.","icon":"wind","data":[{"time":1551884400,"summary":"Rain","icon":"rain","nearestStormDistance":0,"precipIntensity":0.0583,"precipProbability":0.98,"precipType":"rain","temperature":54.92000000000003,"apparentTemperature":54.92000000000003,"dewPoint":51.06999999999998,"humidity":0.87,"pressure":1002.53,"windSpeed":10.72,"windGust":18.81,"windBearing":202,"cloudCover":0.83,"uvIndex":0,"visibility":6.22,"ozone":354.65}]},"daily":{"summary":"","icon":"","data":null},"flags":{"sources":["nearest-precip","nwspa","cmc","gfs","hrrr","icon","isd","madis","nam","sref","darksky"],"nearest-station":1.839,"units":"us"},"offset":0}` {
+	} else if string(b) != `{"latitude":37.8267,"longitude":-122.4233,"timezone":"America/Los_Angeles","currently":{"time":1551886726,"summary":"Mostly Cloudy","icon":"partly-cloudy-day","nearestStormDistance":0,"precipIntensity":0,"precipProbability":0,"temperature":55.09,"apparentTemperature":55.09,"dewPoint":50.97,"humidity":0.86,"pressure":1003.16,"windSpeed":10.93,"windGust":18.43,"windBearing":205,"cloudCover":0.79,"uvIndex":0,"visibility":6.9,"ozone":353.42},"hourly":{"summary":"Mostly cloudy throughout the day and breezy until this afternoon.","icon":"wind","data":[{"time":1551884400,"summary":"Rain","icon":"rain","nearestStormDistance":0,"precipIntensity":0.0583,"precipProbability":0.98,"precipType":"rain","temperature":54.92,"apparentTemperature":54.92,"dewPoint":51.07,"humidity":0.87,"pressure":1002.53,"windSpeed":10.72,"windGust":18.81,"windBearing":202,"cloudCover":0.83,"uvIndex":0,"visibility":6.22,"ozone":354.65}]},"flags":{"sources":["nearest-precip","nwspa","cmc","gfs","hrrr","icon","isd","madis","nam","sref","darksky"],"nearest-station":1.839,"units":"us"},"offset":0}` {
 		t.Errorf("not marshaled properly, got %s", string(b))
 	}
 }
